@@ -99,7 +99,7 @@ class NoduleDataset:
         image = self.image
         if iterations>1:
             aug_images = []
-            for i in range(interations):
+            for i in range(iterations):
                 if len(image.shape)==2:
                     image = self.colorCvt(image,"rgb")
                 image=random_rotation(image,rg=360, row_axis=0, col_axis=1, channel_axis=2, fill_mode="constant")
@@ -113,7 +113,7 @@ class NoduleDataset:
             image=random_zoom(image,zoom_range=(0.7,0.9), row_axis=0, col_axis=1, channel_axis=2,fill_mode="constant")
             if save:
                 img = Image.fromarray(image)
-                img.save(f"{filepath}/{filename}.jpg")
+                img.save(f"{save_filepath}/{filename}.jpg")
             else:
                 self.image = image
     
@@ -231,7 +231,7 @@ class NoduleDataset:
         out = cv2.convertScaleAbs(self.image,alpha=contrast,beta=brightness)
         self.image = out
         
-    def process(self,dataframe):
+    def process_df(self,dataframe):
         for path in tqdm(iterable=dataframe,desc="pre-processing images..."):
             self.file_path=path
             self.read_file_type()
