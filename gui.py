@@ -1,10 +1,12 @@
 import tkinter as tk
+from tkinter import filedialog
 import customtkinter as ct
 
-WIDTH = 1600
-HEIGHT = 900
+WIDTH = 1280
+HEIGHT = 720
 class interface(ct.CTk):
     def __init__(self,*args,**kwargs):
+        self.user_upload = None
         super().__init__(*args,**kwargs)
 
         # window configure
@@ -25,10 +27,10 @@ class interface(ct.CTk):
         self.sidebar.columnconfigure(1,weight=5)
 
                 
-        # for i in range(5):
-        #     self.sidebar_block = ct.CTkFrame(self,fg_color='red',width=50,height=50)
-        #     self.sidebar_block.grid(row=i,column=1,padx=0,pady=0)
-
-app = interface()
-app.mainloop()
+        self.upload = ct.CTkButton(self,bg_color="black",command=self.UploadEvent,text="upload")
+        self.upload.pack()
+    def UploadEvent(self):
+        filename = filedialog.askopenfilename()
+        self.user_upload = filename
+        return self.user_upload
 
