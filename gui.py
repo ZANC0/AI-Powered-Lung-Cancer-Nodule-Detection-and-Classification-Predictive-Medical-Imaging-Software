@@ -8,6 +8,7 @@ WIDTH = 640
 HEIGHT = 360
 class interface(ct.CTk):
     def __init__(self,*args,**kwargs):
+        self.user_upload = None
         super().__init__(*args,**kwargs)
         
         self.default_img = "image-icon.png"
