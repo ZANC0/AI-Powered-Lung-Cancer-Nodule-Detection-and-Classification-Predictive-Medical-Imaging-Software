@@ -40,6 +40,9 @@ class NoduleDataset:
         self.image_height = None
         self.res = res 
         self.image_dataset = []
+        
+    def get_image(self):
+        return self.image
             
     def read_file_type(self):
         if ".jpg" in self.file_path.lower() or ".png" in self.file_path.lower():
@@ -73,12 +76,12 @@ class NoduleDataset:
         if unique_vals:
             print(f"Before Standardization:\n{old}\nAfter Standardization:\n{new}")
     
-    def colorCvt(self,image,color):
+    def colorCvt(self,color):
         if color == "gray":
-            cnvt_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+            cnvt_image = cv2.cvtColor(self.image, cv2.COLOR_BGR2GRAY)
         elif color == "rgb":
-            cnvt_image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
-        return(cnvt_image)
+            cnvt_image = cv2.cvtColor(self.image, cv2.COLOR_GRAY2BGR)
+        self.image = cnvt_image
     
     
     def image_center_crop(self,dim=(400,400)):
@@ -126,9 +129,10 @@ class NoduleDataset:
         This funtion segments the lungs from the given 2D slice.
         '''
         if plot == True:
-            f, plots = plt.subplots(9, 1, figsize=(5, 40))
+            f, plots = plt.subplots(8, 1, figsize=(5, 40))
+            plots[0].set_title("Original Image")
             plots[0].axis('off')
-            plots[0].imshow(im)
+            plots[0].imshow(im,cmap="gray")
         
         '''
         Step 1: Convert into a binary image. 
@@ -139,6 +143,7 @@ class NoduleDataset:
         '''
         binary = im < thres
         if plot == True:
+            plots[1].set_title("Step 1: Convert into a binary image.")
             plots[1].axis('off')
             plots[1].imshow(binary, cmap=plt.cm.bone) 
         '''
@@ -146,6 +151,7 @@ class NoduleDataset:
         '''
         cleared = clear_border(binary)
         if plot == True:
+            plots[2].set_title("Step 2: Remove the blobs connected to the border of the image.")
             plots[2].axis('off')
             plots[2].imshow(cleared, cmap=plt.cm.bone) 
         '''
@@ -153,6 +159,7 @@ class NoduleDataset:
         '''
         label_image = label(cleared)
         if plot == True:
+            plots[3].set_title("Step 3: Label the image")
             plots[3].axis('off')
             plots[3].imshow(label_image, cmap=plt.cm.bone) 
         '''
@@ -167,11 +174,9 @@ class NoduleDataset:
                            label_image[coordinates[0], coordinates[1]] = 0
         binary = label_image > 0
         if plot == True:
+            plots[4].set_title("Step 4: Keep the labels with 2 largest areas.")
             plots[4].axis('off')
             plots[4].imshow(binary, cmap=plt.cm.bone)
-        '''
-        Edge map of the lungs (?)
-        '''
             
         '''
         Step 5: Erosion operation with a disk of radius 2. This operation is 
@@ -180,6 +185,7 @@ class NoduleDataset:
         selem = disk(2)
         binary = binary_erosion(binary, selem)
         if plot == True:
+            plots[5].set_title("Step 5: This operation is seperate the lung nodules attached to blood vessels")
             plots[5].axis('off')
             plots[5].imshow(binary, cmap=plt.cm.bone) 
         '''
@@ -189,33 +195,31 @@ class NoduleDataset:
         selem = disk(10)
         binary = binary_closing(binary, selem)
         if plot == True:
+            plots[6].set_title("Step 6: This operation is to keep nodules attached to the lung wall",)
             plots[6].axis('off')
             plots[6].imshow(binary, cmap=plt.cm.bone) 
-        '''
-        Step 7: Fill in the small holes inside the binary mask of lungs.
-        '''
-        edges = roberts(binary)
+            
+#         '''
+#         Step 7: Fill in the small holes inside the binary mask of lungs.
+#         ''' 
+#         edges = roberts(binary)
         
-        binary = ndi.binary_fill_holes(edges)
-        if plot == True:
-            plots[7].axis('off')
-            plots[7].imshow(binary, cmap=plt.cm.bone)
+#         binary = ndi.binary_fill_holes(edges)
+#         if plot == True:
+#             plots[7].set_title("Step 7: Fill in the small holes inside the binary mask of lungs.")
+#             plots[7].axis('off')
+#             plots[7].imshow(binary, cmap=plt.cm.bone)
         '''
         Step 8: Superimpose the binary mask on the input image.
         '''
         get_high_vals = binary == 0
         im[get_high_vals] = 0
         if plot == True:
-            plots[8].axis('off')
-            plots[8].imshow(im, cmap=plt.cm.bone) 
+            plots[7].set_title("Step 7: Superimpose the binary mask on the input image.")
+            plots[7].axis('off')
+            plots[7].imshow(im, cmap="gray") 
         self.image = im
-    '''
-    arr = Image pixel array
-    contrast = Default to -1
-    brightness = default to 0
-    
-    These custom values bring out the best features
-    '''
+
     
     def remove_noise(self):
         image = self.image
@@ -231,7 +235,7 @@ class NoduleDataset:
         out = cv2.convertScaleAbs(self.image,alpha=contrast,beta=brightness)
         self.image = out
         
-    def process_df(self,dataframe):
+    def process(self,dataframe):
         for path in tqdm(iterable=dataframe,desc="pre-processing images..."):
             self.file_path=path
             self.read_file_type()
