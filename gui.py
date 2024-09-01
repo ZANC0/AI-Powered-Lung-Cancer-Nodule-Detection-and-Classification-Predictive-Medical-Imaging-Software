@@ -19,8 +19,6 @@ class ImageButton(ct.CTkButton):
     def on_click(self):
         self.callback(self.image_path)  # Using image path as a parameter for the callback function setPreviewImage
 
-        
-
 class ImageSelection(ct.CTkScrollableFrame):
     def __init__(self, master, uploaded_images, select_image_callback, **kwargs):
         super().__init__(master, **kwargs)
@@ -98,12 +96,16 @@ class App(ct.CTk):
             fg_color="transparent",
         )
         
+        self.enable_preprocessing = ct.CTkCheckBox(
+            self,
+            command=self.show_preprocessing
+        )
+
         self.mainframe.grid(row=0, column=0)
         self.file_path_entry.grid(row=0, column=0, padx=0, pady=5, ipady=0, sticky="nw")
         self.show_image.grid(row=0, column=0, padx=0, pady=0, ipady=0,ipadx=0, sticky="e")
         self.selection.place(x=0,y=75)
-
-
+        self.enable_preprocessing.place(x=500,y=600)
 
             
     def setPreviewImage(self, path):
@@ -125,6 +127,9 @@ class App(ct.CTk):
                 self.setPreviewImage(filename)  # Optionally, you can set the newly uploaded image as the preview
         except:
             pass
+
+    def show_preprocessing(self):
+        print(self.enable_preprocessing._check_state)
 
 
 def openImage(path):
