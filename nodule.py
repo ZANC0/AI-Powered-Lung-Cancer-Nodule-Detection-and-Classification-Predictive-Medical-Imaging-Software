@@ -1,36 +1,17 @@
-import sys
 import numpy as np
 import cv2
 import matplotlib.pyplot as plt
 import pydicom as pyd
-import scipy
-import skimage
-import pathlib
-from pathlib import Path
-import pandas as pd
-import os
-import tensorflow
-import keras
-from keras.preprocessing.image import random_rotation, random_zoom
-from keras.layers import Conv2D, MaxPooling2D, Dropout
-from pydicom import filereader
 from PIL import Image
 from IPython.display import Image as show_gif
 from tqdm import tqdm
-from sklearn.model_selection import train_test_split
 from scipy.spatial.qhull import QhullError
 from scipy import spatial
 spatial.QhullError = QhullError
 from scipy import ndimage as ndi
-from scipy import ndimage
-from skimage import morphology
 from skimage.morphology import ball, disk, dilation, binary_erosion, remove_small_objects, erosion, closing, reconstruction, binary_closing
 from skimage.measure import label,regionprops, perimeter
-from skimage.morphology import binary_dilation, binary_opening
-from skimage.filters import roberts, sobel
-from skimage import measure, feature
 from skimage.segmentation import clear_border
-from skimage import data
 
 class NoduleDataset:
     def __init__(self, file_path=None, res=512, image=None):

@@ -3,8 +3,9 @@ import tkinter as tk
 from tkinter import filedialog
 import customtkinter as ct
 from PIL import Image, ImageTk
+from matplotlib import pyplot as plt
 import pydicom as pyd
-
+from nodule import NoduleDataset as nd
 WIDTH = 1280
 HEIGHT = 720
 # Thinking like when an image is uploaded, it creates a new object that has its own methods to select the image to display on the
@@ -192,7 +193,14 @@ class App(ct.CTk):
             pass
 
     def show_preprocessing(self):
-        print(self.enable_preprocessing._check_state)
+        if self.enable_preprocessing._check_state:
+            processed_image = nd(file_path=self.file_path_entry._text)
+            processed_image.read_file_type()
+            processed_image.get_segmented_lungs(False)
+            processed_image.standardize()
+            processed_image.remove_noise()
+            processed_image.resize()
+            plt.imshow(processed_image.get_image())
 
 
 def openImage(path):
