@@ -6,6 +6,7 @@ from PIL import Image, ImageTk
 from matplotlib import pyplot as plt
 import pydicom as pyd
 from nodule import NoduleDataset as nd
+import numpy as np
 WIDTH = 1280
 HEIGHT = 720
 # Thinking like when an image is uploaded, it creates a new object that has its own methods to select the image to display on the
@@ -103,6 +104,7 @@ class App(ct.CTk):
         self.default_img = "image-icon.png"
         self.selectedImagePath = "File Path"
         self.uploaded_images = []
+        self.preprocessed_image = None
 
         self.mainframe = ct.CTkFrame(
             self,
@@ -169,6 +171,7 @@ class App(ct.CTk):
         img = openImage(path)
         img = ct.CTkImage(light_image=img, dark_image=img, size=(512,512))
         self.show_image.configure(image=img, bg_color="black")
+        self.selectedImagePath=path
         path = path.split('/')
         self.file_path_entry.configure(text=path[len(path)-1])
 
@@ -189,18 +192,28 @@ class App(ct.CTk):
                 self.uploaded_images.append(filename)
                 self.selection.update_image_buttons()  # Update the image selection list with the new image
                 self.setPreviewImage(filename)  # Optionally, you can set the newly uploaded image as the preview
+                self.pre_process_image(filename)
         except:
             pass
 
+    def pre_process_image(self):
+        processed_image = nd(file_path=self.selectedImagePath)
+        processed_image.read_file_type()
+        processed_image.resize()
+        processed_image.get_segmented_lungs(False)
+        processed_image.remove_noise()
+        processed_image.standardize()
+        
+        return processed_image.get_image()
+    
     def show_preprocessing(self):
         if self.enable_preprocessing._check_state:
-            processed_image = nd(file_path=self.file_path_entry._text)
-            processed_image.read_file_type()
-            processed_image.get_segmented_lungs(False)
-            processed_image.standardize()
-            processed_image.remove_noise()
-            processed_image.resize()
-            plt.imshow(processed_image.get_image())
+            processed_image = self.pre_process_image()
+            processed_image = Image.fromarray(processed_image)
+            processed_image_ct = ct.CTkImage(light_image=processed_image, dark_image=processed_image, size=(512,512))
+            self.show_image.configure(image=processed_image_ct, bg_color="black")
+        else:
+            self.setPreviewImage(self.selectedImagePath)
 
 
 def openImage(path):
