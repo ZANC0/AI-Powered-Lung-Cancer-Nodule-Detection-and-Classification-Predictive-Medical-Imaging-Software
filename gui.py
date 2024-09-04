@@ -209,9 +209,11 @@ class App(ct.CTk):
         processed_image = nd(file_path=path)
         processed_image.read_file_type()
         processed_image.resize()
+        if len(processed_image.get_image().shape) > 2:
+            processed_image.colorCvt("gray")
         processed_image.get_segmented_lungs(False)
         processed_image.remove_noise()
-        processed_image.standardize()
+        processed_image.standardize()        
         return processed_image.get_image()
     
     def show_preprocessing(self):
