@@ -77,12 +77,12 @@ class ImageSelection(ct.CTkScrollableFrame):
         for widget in self.winfo_children():
             widget.destroy()
         # Create a new button for each image
-        for i, img_path in enumerate(self.uploaded_images):
-            img = openImage(img_path)
+        for i, (filename, processed_image) in enumerate(self.uploaded_images.items()):
+            img = openImage(filename)
             img_thumbnail = ct.CTkImage(img, img, size=(128,128))
             img_button = SelectImageButton(
                 self,
-                image_path=img_path,
+                image_path=filename,
                 get_callback=self.select_image_callback,
                 del_callback=self.delete_image_callback,
                 image=img_thumbnail,
@@ -103,8 +103,7 @@ class App(ct.CTk):
                 
         self.default_img = "image-icon.png"
         self.selectedImagePath = "File Path"
-        self.uploaded_images = []
-        self.preprocessed_image = None
+        self.uploaded_images = {}
 
         self.mainframe = ct.CTkFrame(
             self,
@@ -152,68 +151,77 @@ class App(ct.CTk):
         self.file_path_entry.grid(row=0, column=0, padx=0, pady=5, ipady=0, sticky="nw")
         self.show_image.grid(row=0, column=0, padx=0, pady=0, ipady=0,ipadx=0, sticky="e")
         self.selection.place(x=0,y=75)
-        self.enable_preprocessing.place(x=500,y=600)
+        self.enable_preprocessing.place_forget()
 
     def remove_uploaded_image(self, path):
-        self.uploaded_images.remove(path)
-        prev_image = len(self.uploaded_images)-1
-        if len(self.uploaded_images) == 0:
+        self.uploaded_images.pop(path)
+        prev_index = len(self.uploaded_images.keys())-1
+        if prev_index <= 0:
             self.returnDefaultImage()
         else:
-            self.file_path_entry.configure(text=self.getfilename(self.uploaded_images[prev_image]))
-            self.setPreviewImage(self.uploaded_images[prev_image])
+            prev_image = self.uploaded_images.keys()[prev_index]
+            self.file_path_entry.configure(text=self.getfilename(prev_image))
+            self.selectedImagePath = prev_image
+            self.setPreviewImage(prev_image)
 
     def getfilename(self, path):
         path_split = path.split('/')
         return path_split[len(path_split)-1]
     
+    def updateSelectedImagePath(self, path):
+        self.selectedImagePath = path
+
     def setPreviewImage(self, path):
         img = openImage(path)
         img = ct.CTkImage(light_image=img, dark_image=img, size=(512,512))
         self.show_image.configure(image=img, bg_color="black")
-        self.selectedImagePath=path
+        self.updateSelectedImagePath(path)
         path = path.split('/')
         self.file_path_entry.configure(text=path[len(path)-1])
+        
 
     def returnDefaultImage(self):
         img = openImage(self.default_img)
         img = ct.CTkImage(light_image=img, dark_image=img, size=(160,160))
         self.show_image.configure(image=img, bg_color="transparent")
         self.file_path_entry.configure(text="File Name")
+        self.selectedImagePath = self.default_img
+        self.enable_preprocessing.place_forget()
 
     def uploadImage(self):
-        try:
-            filename = filedialog.askopenfilename(
-                initialdir=os.getcwd(),
-                title="Upload Image",
-                filetypes=(("png images", "*.png"), ("jpg images", "*.jpg"), ("jpeg images", "*.jpeg"), ("dcm images", "*.dcm"))            
-            )
-            if filename:
-                self.uploaded_images.append(filename)
-                self.selection.update_image_buttons()  # Update the image selection list with the new image
-                self.setPreviewImage(filename)  # Optionally, you can set the newly uploaded image as the preview
-                self.pre_process_image(filename)
-        except:
-            pass
+        filename = filedialog.askopenfilename(
+            initialdir=os.getcwd(),
+            title="Upload Image",
+            filetypes=(("png images", "*.png"), ("jpg images", "*.jpg"), ("jpeg images", "*.jpeg"), ("dcm images", "*.dcm"))            
+        )
+        if filename:
+            processed_image = self.pre_process_image(filename)
+            self.uploaded_images[filename] = processed_image
+            self.selection.update_image_buttons()  # Update the image selection list with the new image
+            self.setPreviewImage(filename)  # Optionally, you can set the newly uploaded image as the preview
+            self.enable_preprocessing.place(x=500,y=600)
+        else:
+            raise ValueError("Filename is invalid")
 
-    def pre_process_image(self):
-        processed_image = nd(file_path=self.selectedImagePath)
+            
+
+    def pre_process_image(self, path):
+        processed_image = nd(file_path=path)
         processed_image.read_file_type()
         processed_image.resize()
         processed_image.get_segmented_lungs(False)
         processed_image.remove_noise()
         processed_image.standardize()
-        
         return processed_image.get_image()
     
     def show_preprocessing(self):
         if self.enable_preprocessing._check_state:
-            processed_image = self.pre_process_image()
-            processed_image = Image.fromarray(processed_image)
-            processed_image_ct = ct.CTkImage(light_image=processed_image, dark_image=processed_image, size=(512,512))
-            self.show_image.configure(image=processed_image_ct, bg_color="black")
+            img_array = self.uploaded_images[self.selectedImagePath]
+            img = Image.fromarray(img_array)
+            img_tk = ct.CTkImage(light_image=img, dark_image=img, size=(512,512))
+            self.show_image.configure(image=img_tk, bg_color="black")
         else:
-            self.setPreviewImage(self.selectedImagePath)
+            self.setPreviewImage(path=self.selectedImagePath)
 
 
 def openImage(path):
