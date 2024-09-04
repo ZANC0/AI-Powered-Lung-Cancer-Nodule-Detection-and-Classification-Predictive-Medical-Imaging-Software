@@ -1,36 +1,17 @@
-import sys
 import numpy as np
 import cv2
 import matplotlib.pyplot as plt
 import pydicom as pyd
-import scipy
-import skimage
-import pathlib
-from pathlib import Path
-import pandas as pd
-import os
-import tensorflow
-import keras
-from keras.preprocessing.image import random_rotation, random_zoom
-from keras.layers import Conv2D, MaxPooling2D, Dropout
-from pydicom import filereader
 from PIL import Image
 from IPython.display import Image as show_gif
 from tqdm import tqdm
-from sklearn.model_selection import train_test_split
 from scipy.spatial.qhull import QhullError
 from scipy import spatial
 spatial.QhullError = QhullError
 from scipy import ndimage as ndi
-from scipy import ndimage
-from skimage import morphology
 from skimage.morphology import ball, disk, dilation, binary_erosion, remove_small_objects, erosion, closing, reconstruction, binary_closing
 from skimage.measure import label,regionprops, perimeter
-from skimage.morphology import binary_dilation, binary_opening
-from skimage.filters import roberts, sobel
-from skimage import measure, feature
 from skimage.segmentation import clear_border
-from skimage import data
 
 class NoduleDataset:
     def __init__(self, file_path=None, res=512, image=None):
@@ -45,7 +26,7 @@ class NoduleDataset:
         return self.image
             
     def read_file_type(self):
-        if ".jpg" in self.file_path.lower() or ".png" in self.file_path.lower():
+        if ".jpg" in self.file_path.lower() or ".png" in self.file_path.lower() or ".jpeg" in self.file_path.lower():
             image = cv2.imread(self.file_path)
             image[image<0]=0
             self.image = image
@@ -77,9 +58,13 @@ class NoduleDataset:
             print(f"Before Standardization:\n{old}\nAfter Standardization:\n{new}")
     
     def colorCvt(self,color):
-        if color == "gray":
+        '''
+        "gray" converts the image from RGB to GRAY.
+        "rgb" converts the image from GRAY to RGB
+        '''
+        if color == "gray" and len(self.image.shape) > 2:
             cnvt_image = cv2.cvtColor(self.image, cv2.COLOR_BGR2GRAY)
-        elif color == "rgb":
+        elif color == "rgb" and len(self.image.shape)==2:
             cnvt_image = cv2.cvtColor(self.image, cv2.COLOR_GRAY2BGR)
         self.image = cnvt_image
     
@@ -123,6 +108,7 @@ class NoduleDataset:
     
     def get_segmented_lungs(self, plot=False, thres=604):
         im = self.image
+        print(im.shape)
         '''
         source: https://www.kaggle.com/code/arnavkj95/candidate-generation-and-luna16-preprocessing#Segmentation-of-Lungs
 
