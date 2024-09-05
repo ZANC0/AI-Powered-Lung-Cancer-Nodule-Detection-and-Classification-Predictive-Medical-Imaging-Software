@@ -47,7 +47,7 @@ class NoduleDataset:
         image = self.image
         old = np.unique(image)
         image = image - np.min(image)
-        image = image / np.max(image)
+        image = np.max(image) / image
         image = (image*255).astype(np.uint16)
         if to_decimal:
             image = image/255.0
@@ -68,7 +68,6 @@ class NoduleDataset:
             cnvt_image = cv2.cvtColor(self.image, cv2.COLOR_GRAY2BGR)
         self.image = cnvt_image
     
-    
     def image_center_crop(self,dim=(400,400)):
         w = self.image.shape[1]
         h = self.image.shape[0]
@@ -82,7 +81,6 @@ class NoduleDataset:
         mid_crop_width, mid_crop_height = int(crop_width/2), int(crop_height/2) 
         self.image = self.image[mid_y-mid_crop_height:mid_y+mid_crop_height, mid_x-mid_crop_width:mid_x+mid_crop_width]
 
-    
     def gen_augmented_data(self, iterations: int=1, filename: str=None, save_filepath: str=None, save: bool=False):
         image = self.image
         if iterations>1:
@@ -105,10 +103,8 @@ class NoduleDataset:
             else:
                 self.image = image
     
-    
     def get_segmented_lungs(self, plot=False, thres=604):
         im = self.image
-        print(im.shape)
         '''
         source: https://www.kaggle.com/code/arnavkj95/candidate-generation-and-luna16-preprocessing#Segmentation-of-Lungs
 
@@ -206,7 +202,6 @@ class NoduleDataset:
             plots[7].imshow(im, cmap="gray") 
         self.image = im
 
-    
     def remove_noise(self):
         image = self.image
         if np.max(image)>1:
@@ -221,7 +216,7 @@ class NoduleDataset:
         out = cv2.convertScaleAbs(self.image,alpha=contrast,beta=brightness)
         self.image = out
         
-    def process(self,dataframe):
+    def process_dataframe(self,dataframe):
         for path in tqdm(iterable=dataframe,desc="pre-processing images..."):
             self.file_path=path
             self.read_file_type()

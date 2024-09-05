@@ -5,12 +5,14 @@ import customtkinter as ct
 from PIL import Image, ImageTk
 from matplotlib import pyplot as plt
 import pydicom as pyd
+from tqdm import tqdm
 from nodule import NoduleDataset as nd
 import numpy as np
 WIDTH = 1280
 HEIGHT = 720
-# Thinking like when an image is uploaded, it creates a new object that has its own methods to select the image to display on the
-# main page
+
+
+
 class SelectImageButton(ct.CTkButton):
     def __init__(self, master, image_path, get_callback,del_callback, **kwargs):
         super().__init__(master, **kwargs)
@@ -19,7 +21,7 @@ class SelectImageButton(ct.CTkButton):
         self.del_callback = del_callback
         self.configure(command=self.on_click,corner_radius=0,fg_color="#23335e")
 
-        close_thumbnail = openImage("close-btn.png")
+        close_thumbnail = openImage("assets/close-btn.png")
         close_thumbnail = ct.CTkImage(close_thumbnail, close_thumbnail, size=(10,10))
 
         
@@ -97,13 +99,15 @@ class App(ct.CTk):
     def __init__(self):
         super().__init__()
         # window configure
+        
         self.title("PMIS (Predictive Medical Imaging Software) by Zanco Farrell")
         self.geometry(f"{WIDTH}x{HEIGHT}")
         self.configure(background="red")
                 
-        self.default_img = "image-icon.png"
+        self.default_img = "assets/image-icon.png"
         self.selectedImagePath = "File Path"
         self.uploaded_images = {}
+        self.resizable(width=False,height=False)
 
         self.mainframe = ct.CTkFrame(
             self,
@@ -155,11 +159,11 @@ class App(ct.CTk):
 
     def remove_uploaded_image(self, path):
         self.uploaded_images.pop(path)
-        prev_index = len(self.uploaded_images.keys())-1
-        if prev_index <= 0:
+        prev_index = len(self.uploaded_images.keys())-1        
+        if prev_index < 0:
             self.returnDefaultImage()
         else:
-            prev_image = self.uploaded_images.keys()[prev_index]
+            prev_image = list(self.uploaded_images.keys())[prev_index]
             self.file_path_entry.configure(text=self.getfilename(prev_image))
             self.selectedImagePath = prev_image
             self.setPreviewImage(prev_image)
@@ -200,20 +204,18 @@ class App(ct.CTk):
             self.selection.update_image_buttons()  # Update the image selection list with the new image
             self.setPreviewImage(filename)  # Optionally, you can set the newly uploaded image as the preview
             self.enable_preprocessing.place(x=500,y=600)
-        else:
-            raise ValueError("Filename is invalid")
-
-            
-
+        
     def pre_process_image(self, path):
         processed_image = nd(file_path=path)
         processed_image.read_file_type()
-        processed_image.resize()
         if len(processed_image.get_image().shape) > 2:
             processed_image.colorCvt("gray")
-        processed_image.get_segmented_lungs(False)
-        processed_image.remove_noise()
-        processed_image.standardize()        
+        processed_image.standardize()
+        processed_image.resize()
+        
+        # processed_image.get_segmented_lungs(False)
+        # processed_image.remove_noise()
+                
         return processed_image.get_image()
     
     def show_preprocessing(self):
@@ -235,9 +237,6 @@ def openImage(path):
         img = Image.open(path)
     return img
         
-
-
-
 
 newapp = App()
 newapp.mainloop()
