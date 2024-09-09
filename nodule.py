@@ -2,6 +2,8 @@ import numpy as np
 import cv2
 import matplotlib.pyplot as plt
 import pydicom as pyd
+from pydicom.uid import generate_uid
+from pydicom.pixel_data_handlers.util import apply_modality_lut
 from PIL import Image
 from IPython.display import Image as show_gif
 from tqdm import tqdm
@@ -25,37 +27,30 @@ class NoduleDataset:
     def get_image(self):
         return self.image
             
-    def read_file_type(self):
-        if ".jpg" in self.file_path.lower() or ".png" in self.file_path.lower() or ".jpeg" in self.file_path.lower():
-            image = cv2.imread(self.file_path)
-            image[image<0]=0
-            self.image = image
-            return(self.image)
-        elif ".dcm" in self.file_path.lower():
+    def read_dcm_image(self):
+        try:
             image = pyd.dcmread(self.file_path)
             image = image.pixel_array
-            image[image<0]=0
+            image[image<0] = 0
             self.image = image
             return(self.image)
-        else:
-            raise ValueError(f"{self.file_path.lower() }File Format not supported. Try using .png, .jpg or .dcm")
+        except:
+            raise ValueError(f"The file {self.file_path} with the file type {self.file_path[:3]} is not supported, only .dcm files are allowed.")
     
     def resize(self):
         self.image = cv2.resize(self.image,(self.res,self.res))
     
-    def standardize(self,unique_vals=False,to_decimal=False):
+    def normalization(self,to_decimal=False):
+        '''
+        Changes the range of image pixel values to 0-255
+        '''
         image = self.image
-        old = np.unique(image)
         image = image - np.min(image)
-        image = np.max(image) / image
+        image = image / np.max(image)
         image = (image*255).astype(np.uint16)
         if to_decimal:
             image = image/255.0
-        self.image = image
-        
-        new = np.unique(self.image)
-        if unique_vals:
-            print(f"Before Standardization:\n{old}\nAfter Standardization:\n{new}")
+        self.image = image       
     
     def colorCvt(self,color):
         '''
@@ -214,17 +209,5 @@ class NoduleDataset:
             
     def contrast_arr(self,contrast=10,brightness=0):
         out = cv2.convertScaleAbs(self.image,alpha=contrast,beta=brightness)
-        self.image = out
-        
-    def process_dataframe(self,dataframe):
-        for path in tqdm(iterable=dataframe,desc="pre-processing images..."):
-            self.file_path=path
-            self.read_file_type()
-            self.get_segmented_lungs(False)
-            self.standardize()
-            self.remove_noise()
-            self.resize()
-            self.image_dataset.append(self.image)
-            image_dataset = np.asarray(self.image_dataset)
-        return(image_dataset)
+        self.image = out 
 

@@ -206,21 +206,22 @@ class App(ct.CTk):
             self.enable_preprocessing.place(x=500,y=600)
         
     def pre_process_image(self, path):
+        '''
+        Take the image and is read and processed by nodule.py
+        -Currently only works with DCM, probably becuse of other file types not using HU but 0-255 pixel brightness
+        '''
         processed_image = nd(file_path=path)
-        processed_image.read_file_type()
-        if len(processed_image.get_image().shape) > 2:
-            processed_image.colorCvt("gray")
-        processed_image.standardize()
+        processed_image.read_dcm_image()
         processed_image.resize()
-        
-        # processed_image.get_segmented_lungs(False)
-        # processed_image.remove_noise()
-                
+        processed_image.get_segmented_lungs(False)
+        processed_image.remove_noise()
+        processed_image.normalization()
         return processed_image.get_image()
     
     def show_preprocessing(self):
         if self.enable_preprocessing._check_state:
             img_array = self.uploaded_images[self.selectedImagePath]
+            # print(np.max(img_array),np.min(img_array))
             img = Image.fromarray(img_array)
             img_tk = ct.CTkImage(light_image=img, dark_image=img, size=(512,512))
             self.show_image.configure(image=img_tk, bg_color="black")
