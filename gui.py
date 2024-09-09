@@ -133,7 +133,8 @@ class App(ct.CTk):
             width=WIDTH-200,
             height=HEIGHT,
             text="",
-            command=self.uploadImage
+            command=self.uploadImage,
+            hover_color="red"
         )
         
         self.selection = ImageSelection(
@@ -182,7 +183,6 @@ class App(ct.CTk):
         self.updateSelectedImagePath(path)
         path = path.split('/')
         self.file_path_entry.configure(text=path[len(path)-1])
-        
 
     def returnDefaultImage(self):
         img = openImage(self.default_img)
@@ -196,11 +196,11 @@ class App(ct.CTk):
         filename = filedialog.askopenfilename(
             initialdir=os.getcwd(),
             title="Upload Image",
-            filetypes=(("png images", "*.png"), ("jpg images", "*.jpg"), ("jpeg images", "*.jpeg"), ("dcm images", "*.dcm"))            
+            filetypes=(("DICOM", "*.dcm"),("All File Types", "*"))            
         )
         if filename:
             processed_image = self.pre_process_image(filename)
-            self.uploaded_images[filename] = processed_image
+            self.uploaded_images[filename] = processed_image # pair of images, original:processed
             self.selection.update_image_buttons()  # Update the image selection list with the new image
             self.setPreviewImage(filename)  # Optionally, you can set the newly uploaded image as the preview
             self.enable_preprocessing.place(x=500,y=600)
@@ -208,20 +208,18 @@ class App(ct.CTk):
     def pre_process_image(self, path):
         '''
         Take the image and is read and processed by nodule.py
-        -Currently only works with DCM, probably becuse of other file types not using HU but 0-255 pixel brightness
         '''
-        processed_image = nd(file_path=path)
+        processed_image = nd(file_path=path,)
         processed_image.read_dcm_image()
-        processed_image.resize()
-        processed_image.get_segmented_lungs(False)
+        processed_image.get_segmented_lungs(True,thres=604)
+        processed_image.normalization(to_decimal=True)
         processed_image.remove_noise()
-        processed_image.normalization()
+
         return processed_image.get_image()
     
     def show_preprocessing(self):
         if self.enable_preprocessing._check_state:
             img_array = self.uploaded_images[self.selectedImagePath]
-            # print(np.max(img_array),np.min(img_array))
             img = Image.fromarray(img_array)
             img_tk = ct.CTkImage(light_image=img, dark_image=img, size=(512,512))
             self.show_image.configure(image=img_tk, bg_color="black")

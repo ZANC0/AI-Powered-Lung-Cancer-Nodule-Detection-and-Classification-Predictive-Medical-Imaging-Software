@@ -29,11 +29,13 @@ class NoduleDataset:
             
     def read_dcm_image(self):
         try:
-            image = pyd.dcmread(self.file_path)
-            image = image.pixel_array
-            image[image<0] = 0
+            dcm_image = pyd.dcmread(self.file_path)
+            image = dcm_image.pixel_array
+            slope = float(dcm_image.RescaleSlope)
+            intercept = float(dcm_image.RescaleIntercept)
+            image = slope * image + intercept
             self.image = image
-            return(self.image)
+
         except:
             raise ValueError(f"The file {self.file_path} with the file type {self.file_path[:3]} is not supported, only .dcm files are allowed.")
     
@@ -199,10 +201,18 @@ class NoduleDataset:
 
     def remove_noise(self):
         image = self.image
+        
         if np.max(image)>1:
-            image[image<(255*0.1)]=0
+            if np.mean(image)>0.01:
+                image[image<(255+0.3)]=0
+            else:
+                image[image<(255*0.2)]=0
+                
         elif np.max(image)<=1:
-            image[image<0.1]=0
+            if np.mean(image)>0.01:
+                image[image<0.3]=0
+            else:
+                image[image<0.2]=0
         else:
             raise "image have invalid pixel values"
         self.image=image
