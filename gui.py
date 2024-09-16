@@ -60,9 +60,11 @@ class SelectImageButton(ct.CTkButton):
 
     def check_leave(self, event=None):
         # Check if the cursor is still within the widget or the close button
-        if not (self.winfo_containing(event.x_root, event.y_root) == self or 
-                self.winfo_containing(event.x_root, event.y_root) == self.close_btn):
-            self.hide_close_btn()
+            if not (self.winfo_containing(event.x_root, event.y_root) == self or 
+                    self.winfo_containing(event.x_root, event.y_root) == self.close_btn):
+                self.hide_close_btn()
+
+
         
     
 
@@ -149,7 +151,8 @@ class App(ct.CTk):
         
         self.enable_preprocessing = ct.CTkCheckBox(
             self,
-            command=self.show_preprocessing
+            command=self.show_preprocessing,
+            text="Show Noise Removal"
         )
 
         self.mainframe.grid(row=0, column=0)
@@ -209,11 +212,12 @@ class App(ct.CTk):
         '''
         Take the image and is read and processed by nodule.py
         '''
-        processed_image = nd(file_path=path,)
+        processed_image = nd(file_path=path)
         processed_image.read_dcm_image()
+        
         processed_image.get_segmented_lungs(True,thres=604)
-        processed_image.normalization(to_decimal=True)
         processed_image.remove_noise()
+        processed_image.normalization()
 
         return processed_image.get_image()
     
@@ -239,4 +243,5 @@ def openImage(path):
 
 newapp = App()
 newapp.mainloop()
+
 

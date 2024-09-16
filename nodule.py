@@ -15,6 +15,7 @@ from skimage.morphology import ball, disk, dilation, binary_erosion, remove_smal
 from skimage.measure import label,regionprops, perimeter
 from skimage.segmentation import clear_border
 
+
 class NoduleDataset:
     def __init__(self, file_path=None, res=512, image=None):
         self.file_path = str(file_path)
@@ -31,9 +32,9 @@ class NoduleDataset:
         try:
             dcm_image = pyd.dcmread(self.file_path)
             image = dcm_image.pixel_array
-            slope = float(dcm_image.RescaleSlope)
-            intercept = float(dcm_image.RescaleIntercept)
-            image = slope * image + intercept
+            # slope = float(dcm_image.RescaleSlope)
+            # intercept = float(dcm_image.RescaleIntercept)
+            # image = slope * image + intercept
             self.image = image
 
         except:
