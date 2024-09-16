@@ -7,3 +7,6 @@ As mentioned before, this was my disseration in 3rd year of university and at th
 ### Aim
 The aim of this application is to analyse CT-scans of a patient's lungs and provide a prediction of whether there is malignant or benign lung cancer present, using the UI to visually show where in the CT-Scan lung cancer could be as well as the classification predicted.
 ![image](https://github.com/user-attachments/assets/1f3e2ea3-3bc8-4790-8f19-54ddaefc7853)
+![image](https://github.com/user-attachments/assets/a2fbb021-9c7e-4db7-8984-963919d57eef)
+![image](https://github.com/user-attachments/assets/a2d6489d-4f29-4ee1-8460-d2b3fff8915d)
+
